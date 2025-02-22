@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laundry Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        select, input {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Laundry Calculator</h1>
+        <form id="laundryForm">
+            <label for="dropDay">Select Drop-off Day:</label>
+            <select id="dropDay" name="dropDay">
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+                <option value="Sunday">Sunday</option>
+            </select>
+
+            <label for="serviceType">Select Service Type:</label>
+            <select id="serviceType" name="serviceType">
+                <option value="regular">Regular (3 days)</option>
+                <option value="express">Express (1 day)</option>
+                <option value="jas">Jas (Suit) - Rp 15,000/item</option>
+            </select>
+
+            <div id="weightInput">
+                <label for="weight">Enter Laundry Weight (kg):</label>
+                <input type="number" id="weight" name="weight" placeholder="e.g., 5" min="1" required>
+            </div>
+
+            <div id="itemInput" style="display: none;">
+                <label for="itemCount">Enter Number of Jas Items:</label>
+                <input type="number" id="itemCount" name="itemCount" placeholder="e.g., 2" min="1" required>
+            </div>
+
+            <button type="button" onclick="calculatePrice()">Calculate</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+        function calculatePrice() {
+            // Get user inputs
+            const dropDay = document.getElementById("dropDay").value;
+            const serviceType = document.getElementById("serviceType").value;
+
+            let weight = parseFloat(document.getElementById("weight").value);
+            let itemCount = parseInt(document.getElementById("itemCount").value);
+
+            // Validate inputs based on service type
+            if (serviceType !== "jas" && (isNaN(weight) || weight <= 0)) {
+                document.getElementById("result").innerHTML = "<p>Please enter a valid weight.</p>";
+                return;
+            }
+            if (serviceType === "jas" && (isNaN(itemCount) || itemCount <= 0)) {
+                document.getElementById("result").innerHTML = "<p>Please enter a valid number of items.</p>";
+                return;
+            }
+
+            // Calculate finish day
+            const dropDayIndex = daysOfWeek.indexOf(dropDay);
+            let finishDayIndex;
+            if (serviceType === "regular") {
+                finishDayIndex = (dropDayIndex + 3) % 7; // 3 days later
+            } else if (serviceType === "express") {
+                finishDayIndex = (dropDayIndex + 1) % 7; // 1 day later
+            } else if (serviceType === "jas") {
+                finishDayIndex = (dropDayIndex + 2) % 7; // 2 days later for Jas
+            }
+            const finishDay = daysOfWeek[finishDayIndex];
+
+            // Calculate price
+            let totalPrice;
+            if (serviceType === "regular") {
+                totalPrice = weight * 6000 * 3; // Rp 6,000 × weight × 3 days
+            } else if (serviceType === "express") {
+                totalPrice = weight * 10000; // Rp 10,000 × weight × 1 day
+            } else if (serviceType === "jas") {
+                totalPrice = itemCount * 15000; // Rp 15,000 × number of items
+            }
+
+            // Display the result
+            document.getElementById("result").innerHTML = `
+                <p><strong>Drop-off Day:</strong> ${dropDay}</p>
+                <p><strong>Finish Day:</strong> ${finishDay}</p>
+                <p><strong>Service Type:</strong> ${
+                    serviceType === "regular" ? "Regular (3 days)" :
+                    serviceType === "express" ? "Express (1 day)" :
+                    "Jas (Suit) - Rp 15,000/item"
+                }</p>
+                ${
+                    serviceType !== "jas"
+                        ? `<p><strong>Laundry Weight:</strong> ${weight} kg</p>`
+                        : `<p><strong>Number of Jas Items:</strong> ${itemCount}</p>`
+                }
+                <p><strong>Total Price:</strong> Rp ${totalPrice.toLocaleString()}</p>
+            `;
+        }
+
+        // Toggle input fields based on service type
+        document.getElementById("serviceType").addEventListener("change", function () {
+            const weightInput = document.getElementById("weightInput");
+            const itemInput = document.getElementById("itemCount").parentElement;
+
+            if (this.value === "jas") {
+                weightInput.style.display = "none";
+                itemInput.style.display = "block";
+            } else {
+                weightInput.style.display = "block";
+                itemInput.style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>
